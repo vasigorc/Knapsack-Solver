@@ -12,21 +12,21 @@ impl Clock {
     }
 }
 
-pub struct Knapsack {
-    contents: Vec<Clock>,
+pub struct Knapsack<'a> {
+    contents: &'a [Clock],
 }
 
-impl Knapsack {
-    pub fn from_clocks(clocks: Vec<Clock>) -> Knapsack {
+impl<'a> Knapsack<'a> {
+    pub fn from_clocks(clocks: &'a [Clock]) -> Knapsack<'a> {
         Knapsack { contents: clocks }
     }
 
-    pub fn empty() -> Knapsack {
-        Knapsack::from_clocks(Vec::new())
+    pub fn empty() -> Knapsack<'a> {
+        Knapsack { contents: &[] }
     }
 
-    pub fn get_contents(&self) -> &Vec<Clock> {
-        &self.contents
+    pub fn get_contents(&self) -> &[Clock] {
+        self.contents
     }
 }
 
@@ -49,7 +49,12 @@ mod tests {
             Clock::new(0.75, 29.99),
             Clock::new(0.9, 39.99),
         ];
-        let filled_knapsack = Knapsack::from_clocks(clocks.clone());
+        let filled_knapsack = Knapsack::from_clocks(&clocks);
         assert_eq!(&clocks, filled_knapsack.get_contents());
+    }
+
+    #[rstest]
+    fn one_should_be_able_to_add_clocks_to_contents_of_knapsack() {
+
     }
 }
