@@ -12,22 +12,41 @@ impl Clock {
     }
 }
 
+impl PartialEq<&Clock> for Clock {
+    fn eq(&self, other: &&Clock) -> bool {
+        self == *other
+    }
+}
+
 pub struct Knapsack<'a> {
-    contents: &'a [Clock],
+  contents: Vec<&'a Clock>,
 }
 
 impl<'a> Knapsack<'a> {
-    pub fn from_clocks(clocks: &'a [Clock]) -> Knapsack<'a> {
-        Knapsack { contents: clocks }
-    }
+  pub fn from_clocks(clocks: &'a [Clock]) -> Knapsack<'a> {
+      Knapsack {
+          contents: clocks.iter().collect(),
+      }
+  }
 
-    pub fn empty() -> Knapsack<'a> {
-        Knapsack { contents: &[] }
-    }
+  pub fn empty() -> Knapsack<'a> {
+      Knapsack {
+          contents: Vec::new(),
+      }
+  }
 
-    pub fn get_contents(&self) -> &[Clock] {
-        self.contents
-    }
+  pub fn get_contents(&self) -> &[&'a Clock] {
+      &self.contents
+  }
+
+  pub fn add_clock(&self, clock: &'a Clock) -> Knapsack<'a> {
+      let mut new_contents = self.contents.clone();
+      new_contents.push(clock);
+
+      Knapsack {
+          contents: new_contents,
+      }
+  }
 }
 
 #[cfg(test)]
@@ -55,6 +74,14 @@ mod tests {
 
     #[rstest]
     fn one_should_be_able_to_add_clocks_to_contents_of_knapsack() {
+      let knapsack = Knapsack::empty();
+      let clock = Clock::new(4.45, 2.29);
+      let updated_knapsack = knapsack.add_clock(&clock);
 
+      
+      let expected_contents = vec![&clock];
+      let actual_contents = updated_knapsack.get_contents();
+
+      assert_eq!(&expected_contents[..], actual_contents);
     }
 }
