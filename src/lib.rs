@@ -1,6 +1,6 @@
 use rstest::rstest;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Clock {
     weight: f32,
     price: f32,
@@ -12,34 +12,28 @@ impl Clock {
     }
 }
 
-impl PartialEq<&Clock> for Clock {
-    fn eq(&self, other: &&Clock) -> bool {
-        self == *other
-    }
+pub struct Knapsack {
+  contents: Vec<Clock>,
 }
 
-pub struct Knapsack<'a> {
-  contents: Vec<&'a Clock>,
-}
-
-impl<'a> Knapsack<'a> {
-  pub fn from_clocks(clocks: &'a [Clock]) -> Knapsack<'a> {
+impl Knapsack {
+  pub fn from_clocks(clocks: &[Clock]) -> Knapsack {
       Knapsack {
-          contents: clocks.iter().collect(),
+          contents: clocks.iter().cloned().collect(),
       }
   }
 
-  pub fn empty() -> Knapsack<'a> {
+  pub fn empty() -> Knapsack {
       Knapsack {
           contents: Vec::new(),
       }
   }
 
-  pub fn get_contents(&self) -> &[&'a Clock] {
+  pub fn get_contents(&self) -> &[Clock] {
       &self.contents
   }
 
-  pub fn add_clock(&self, clock: &'a Clock) -> Knapsack<'a> {
+  pub fn add_clock(&self, clock: Clock) -> Knapsack {
       let mut new_contents = self.contents.clone();
       new_contents.push(clock);
 
@@ -76,10 +70,10 @@ mod tests {
     fn one_should_be_able_to_add_clocks_to_contents_of_knapsack() {
       let knapsack = Knapsack::empty();
       let clock = Clock::new(4.45, 2.29);
-      let updated_knapsack = knapsack.add_clock(&clock);
+      let updated_knapsack = knapsack.add_clock(clock);
 
       
-      let expected_contents = vec![&clock];
+      let expected_contents = vec![clock];
       let actual_contents = updated_knapsack.get_contents();
 
       assert_eq!(&expected_contents[..], actual_contents);
