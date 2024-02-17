@@ -1,5 +1,8 @@
 use core::slice;
-use std::cell::RefCell;
+use std::{
+    cell::RefCell,
+    cmp::{self, Ordering},
+};
 
 use rust_decimal::Decimal;
 
@@ -79,6 +82,18 @@ impl Problem<'_> {
 
     fn get_all_combinations(&self) -> Vec<Knapsack> {
         self.iter().collect()
+    }
+
+    // Compare two Knapsacks by their cumulative monetary value
+    fn cmp(first: &Knapsack, second: &Knapsack) -> Ordering {
+        first
+            .get_value()
+            .partial_cmp(&second.get_value())
+            .unwrap_or(Ordering::Equal)
+    }
+
+    fn get_best_knapsack(&self) -> Option<Knapsack> {
+        self.iter().max_by(Self::cmp)
     }
 }
 

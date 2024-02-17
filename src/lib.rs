@@ -77,6 +77,10 @@ impl Knapsack {
     pub fn non_empty(&self) -> bool {
         !self.is_empty()
     }
+
+    pub fn get_value(&self) -> Decimal {
+        self.get_contents().iter().map(|c| c.price).sum()
+    }
 }
 
 #[rstest]
