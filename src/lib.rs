@@ -1,13 +1,11 @@
 mod problem;
 
+use derive_new::new;
 use rstest::rstest;
-use rust_decimal::{
-    prelude::{FromPrimitive, ToPrimitive},
-    Decimal,
-};
+use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
-#[derive(Debug, Eq, Hash, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, Hash, PartialEq, Copy, Clone, new)]
 pub struct Clock {
     pub weight: Decimal,
     pub price: Decimal,
@@ -15,23 +13,7 @@ pub struct Clock {
 
 #[derive(Debug, Clone)]
 pub enum AppError {
-    ClockCreationError,
     KnapsackFullError,
-}
-
-impl Clock {
-    pub fn from_f32(weight: f32, price: f32) -> Result<Clock, AppError> {
-        let dec_weight = Decimal::from_f32(weight).ok_or(AppError::ClockCreationError)?;
-        let dec_price = Decimal::from_f32(price).ok_or(AppError::ClockCreationError)?;
-        Ok(Clock {
-            weight: dec_weight,
-            price: dec_price,
-        })
-    }
-
-    pub fn weight_as_f32(&self) -> f32 {
-        self.weight.to_f32().unwrap_or_default()
-    }
 }
 
 #[derive(Clone, Eq, Hash, PartialEq, Debug)]
@@ -92,9 +74,9 @@ fn empty_knapsack_should_contain_no_clocks() {
 #[rstest]
 fn filled_knapsack_should_contain_all_clocks_passed_at_construction() -> Result<(), AppError> {
     let clocks = vec![
-        Clock::from_f32(0.5, 19.99)?,
-        Clock::from_f32(0.75, 29.99)?,
-        Clock::from_f32(0.9, 39.99)?,
+        Clock::new(dec!(0.5), dec!(19.99)),
+        Clock::new(dec!(0.75), dec!(29.99)),
+        Clock::new(dec!(0.9), dec!(39.99)),
     ];
 
     let filled_knapsack = Knapsack::from_clocks(&clocks, dec!(5.0))?;
@@ -104,7 +86,7 @@ fn filled_knapsack_should_contain_all_clocks_passed_at_construction() -> Result<
 
 #[rstest]
 fn one_should_be_able_to_add_clocks_to_contents_of_knapsack() -> Result<(), AppError> {
-    let clock = Clock::from_f32(4.45, 2.29)?;
+    let clock = Clock::new(dec!(4.45), dec!(2.29));
     let updated_knapsack = Knapsack::from_clocks(&[clock], dec!(5.0))?;
 
     let expected_contents = vec![clock];
