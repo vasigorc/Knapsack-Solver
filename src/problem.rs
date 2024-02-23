@@ -217,4 +217,44 @@ mod tests {
             .collect::<HashSet<Knapsack>>();
         expect!(expected.is_subset(&result));
     }
+
+    #[rstest]
+    fn get_best_knapsack_for_two_solutions(max_weight: Decimal, three_clocks: Vec<Clock>) {
+        let expected_best_solution = vec![three_clocks[1], three_clocks[2]];
+        let problem = Problem {
+            max_weight,
+            clocks: &three_clocks,
+        };
+
+        problem
+            .get_best_knapsack()
+            .map(|actual_solution| {
+                assert_eq!(actual_solution.get_contents(), expected_best_solution)
+            })
+            .unwrap_or_else(|| panic!("Expected a solution, but got None"));
+    }
+
+    #[rstest]
+    fn get_best_knapsack_with_multiple_solutions(max_weight: Decimal) {
+        let clocks = vec![
+            Clock::new(dec!(2.0), dec!(5.0)),
+            Clock::new(dec!(3.0), dec!(8.0)),
+            Clock::new(dec!(5.0), dec!(12.0)),
+            Clock::new(dec!(1.0), dec!(3.0)),
+        ];
+
+        let problem = Problem {
+            max_weight,
+            clocks: &clocks,
+        };
+
+        let expected_best_solution = vec![clocks[0], clocks[1], clocks[2]];
+
+        problem
+            .get_best_knapsack()
+            .map(|actual_solution| {
+                assert_eq!(actual_solution.get_contents(), expected_best_solution)
+            })
+            .unwrap_or_else(|| panic!("Expected a solution, but got None"));
+    }
 }
