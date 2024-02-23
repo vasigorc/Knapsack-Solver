@@ -1,5 +1,5 @@
 use core::slice;
-use std::cell::RefCell;
+use std::{cell::RefCell, cmp::Ordering};
 
 use rust_decimal::Decimal;
 
@@ -80,14 +80,24 @@ impl Problem<'_> {
     fn get_all_combinations(&self) -> Vec<Knapsack> {
         self.iter().collect()
     }
+
+    // Compare two Knapsacks by their cumulative monetary value
+    fn cmp(first: &Knapsack, second: &Knapsack) -> Ordering {
+        first
+            .get_value()
+            .partial_cmp(&second.get_value())
+            .unwrap_or(Ordering::Equal)
+    }
+
+    fn get_best_knapsack(&self) -> Option<Knapsack> {
+        self.iter().max_by(Self::cmp)
+    }
 }
 
 #[cfg(test)]
 mod tests {
 
     use std::collections::HashSet;
-
-    use crate::AppError;
 
     use super::*;
     use expectest::prelude::*;
@@ -97,6 +107,15 @@ mod tests {
     #[fixture]
     fn max_weight() -> Decimal {
         dec!(10.0)
+    }
+
+    #[fixture]
+    fn three_clocks() -> Vec<Clock> {
+        vec![
+            Clock::new(dec!(5.0), dec!(6.0)),
+            Clock::new(dec!(4.0), dec!(4.0)),
+            Clock::new(dec!(6.0), dec!(7.0)),
+        ]
     }
 
     #[rstest]
@@ -124,8 +143,8 @@ mod tests {
     }
 
     #[rstest]
-    fn knapsack_with_single_clock_below_max_weight(max_weight: Decimal) -> Result<(), AppError> {
-        let clock = Clock::from_f32(5.0, 20.0)?;
+    fn knapsack_with_single_clock_below_max_weight(max_weight: Decimal) {
+        let clock = Clock::new(dec!(5.0), dec!(20.0));
         let problem = Problem {
             clocks: &[clock],
             max_weight,
@@ -134,12 +153,11 @@ mod tests {
         let result = problem.get_all_combinations();
 
         expect!(result.iter()).to(have_count(1));
-        Ok(())
     }
 
     #[rstest]
-    fn knapsack_with_single_clock_exceeds_max_weight(max_weight: Decimal) -> Result<(), AppError> {
-        let clock = Clock::from_f32(15.0, 20.0)?;
+    fn knapsack_with_single_clock_exceeds_max_weight(max_weight: Decimal) {
+        let clock = Clock::new(dec!(15.0), dec!(20.0));
         let problem = Problem {
             clocks: &[clock],
             max_weight,
@@ -148,12 +166,14 @@ mod tests {
         let result = problem.get_all_combinations();
 
         expect!(result.iter()).to(be_empty());
-        Ok(())
     }
 
     #[rstest]
-    fn knapsack_with_two_clocks_below_max_weight(max_weight: Decimal) -> Result<(), AppError> {
-        let clocks = vec![Clock::from_f32(5.0, 20.0)?, Clock::from_f32(4.0, 10.0)?];
+    fn knapsack_with_two_clocks_below_max_weight(max_weight: Decimal) {
+        let clocks = vec![
+            Clock::new(dec!(5.0), dec!(20.0)),
+            Clock::new(dec!(4.0), dec!(10.0)),
+        ];
         let problem = Problem {
             clocks: &clocks,
             max_weight,
@@ -170,19 +190,13 @@ mod tests {
             .filter_map(|clocks| Knapsack::from_clocks(&clocks, max_weight).ok())
             .collect();
         expect!(result).to(be_equal_to(expected));
-        Ok(())
     }
 
     #[rstest]
-    fn knapsack_with_three_clocks_two_solutions(max_weight: Decimal) -> Result<(), AppError> {
-        let clocks = vec![
-            Clock::from_f32(5.0, 6.0)?,
-            Clock::from_f32(4.0, 4.0)?,
-            Clock::from_f32(6.0, 7.0)?,
-        ];
+    fn knapsack_with_three_clocks_two_solutions(max_weight: Decimal, three_clocks: Vec<Clock>) {
         let problem = Problem {
             max_weight,
-            clocks: &clocks,
+            clocks: &three_clocks,
         };
 
         let result = problem
@@ -191,17 +205,56 @@ mod tests {
             .collect::<HashSet<Knapsack>>();
 
         let mut expected_clocks: HashSet<Vec<Clock>> = HashSet::new();
-        expected_clocks.insert(vec![clocks[0]]);
-        expected_clocks.insert(vec![clocks[1]]);
-        expected_clocks.insert(vec![clocks[2]]);
-        expected_clocks.insert(vec![clocks[0], clocks[1]]);
-        expected_clocks.insert(vec![clocks[1], clocks[2]]);
+        expected_clocks.insert(vec![three_clocks[0]]);
+        expected_clocks.insert(vec![three_clocks[1]]);
+        expected_clocks.insert(vec![three_clocks[2]]);
+        expected_clocks.insert(vec![three_clocks[0], three_clocks[1]]);
+        expected_clocks.insert(vec![three_clocks[1], three_clocks[2]]);
 
         let expected = expected_clocks
             .into_iter()
             .filter_map(|clocks| Knapsack::from_clocks(&clocks, max_weight).ok())
             .collect::<HashSet<Knapsack>>();
         expect!(expected.is_subset(&result));
-        Ok(())
+    }
+
+    #[rstest]
+    fn get_best_knapsack_for_two_solutions(max_weight: Decimal, three_clocks: Vec<Clock>) {
+        let expected_best_solution = vec![three_clocks[1], three_clocks[2]];
+        let problem = Problem {
+            max_weight,
+            clocks: &three_clocks,
+        };
+
+        problem
+            .get_best_knapsack()
+            .map(|actual_solution| {
+                assert_eq!(actual_solution.get_contents(), expected_best_solution)
+            })
+            .unwrap_or_else(|| panic!("Expected a solution, but got None"));
+    }
+
+    #[rstest]
+    fn get_best_knapsack_with_multiple_solutions(max_weight: Decimal) {
+        let clocks = vec![
+            Clock::new(dec!(2.0), dec!(5.0)),
+            Clock::new(dec!(3.0), dec!(8.0)),
+            Clock::new(dec!(5.0), dec!(12.0)),
+            Clock::new(dec!(1.0), dec!(3.0)),
+        ];
+
+        let problem = Problem {
+            max_weight,
+            clocks: &clocks,
+        };
+
+        let expected_best_solution = vec![clocks[0], clocks[1], clocks[2]];
+
+        problem
+            .get_best_knapsack()
+            .map(|actual_solution| {
+                assert_eq!(actual_solution.get_contents(), expected_best_solution)
+            })
+            .unwrap_or_else(|| panic!("Expected a solution, but got None"));
     }
 }
