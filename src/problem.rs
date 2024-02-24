@@ -43,7 +43,7 @@ impl<'clocks> Iterator for SolutionIter<'clocks> {
                         ));
                     }
                     // push an option without current head, i.e. first from tail if any
-                    if let Some(index) = Self::find_valid_clock_index(&tail, self.max_weight) {
+                    if let Some(index) = Self::find_valid_clock_index(tail, self.max_weight) {
                         let next_head =
                             Knapsack::from_clocks(&tail[index..=index], self.max_weight).unwrap();
                         bor_stack.push((next_head, &tail[index + 1..]));
