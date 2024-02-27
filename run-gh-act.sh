@@ -1,16 +1,21 @@
 #!/bin/bash
 
-# Variables
 DOCKER_IMAGE_NAME="my-act-image"
-GH_ACT_PLATFORM="ubuntu-latest"
+ARC_PLATFORM="$(uname -m)"
 
 # Check if Docker image exists
 if [[ "$(docker images -q $DOCKER_IMAGE_NAME 2> /dev/null)" == "" ]]; then
-  # Docker image doesn't exist, create it
   echo "Building Docker image..."
-  docker build -t $DOCKER_IMAGE_NAME .
+  
+  # Check if the machine architecture is not arm64
+  if [[ $ARC_PLATFORM == "arm64" ]]; then
+    ARC_PLATFORM="linux/arm64"
+    docker buildx create --use
+    docker buildx build --platform $ARC_PLATFORM -t $DOCKER_IMAGE_NAME -f Dockerfile.arm64 . --load
+  else
+    docker build -t $DOCKER_IMAGE_NAME -f Dockerfile.amd64 .
+  fi
 fi
 
-# Run `gh act` with the specified platform and Docker image
-echo "Running gh act..."
-gh act --pull=false --platform $GH_ACT_PLATFORM=$DOCKER_IMAGE_NAME -j build
+echo "Running gh act on $ARC_PLATFORM..."
+gh act --container-architecture $ARC_PLATFORM --pull=false --platform ubuntu-latest=$DOCKER_IMAGE_NAME -j build
