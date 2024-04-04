@@ -1,6 +1,6 @@
 use core::slice;
 use derive_new::new;
-use std::{cell::RefCell, cmp::Ordering};
+use std::cmp::Ordering;
 
 use rust_decimal::Decimal;
 
@@ -13,7 +13,7 @@ pub struct Problem<'clocks> {
 }
 
 struct SolutionIter<'clocks> {
-  stack: RefCell<Vec<(Knapsack, &'clocks [Clock])>>,
+  stack: Vec<(Knapsack, &'clocks [Clock])>,
   visited: Vec<Knapsack>,
   max_weight: Decimal,
 }
@@ -30,7 +30,7 @@ impl<'clocks> Iterator for SolutionIter<'clocks> {
   type Item = Knapsack;
 
   fn next(&mut self) -> Option<Self::Item> {
-    let mut bor_stack = self.stack.borrow_mut();
+    let bor_stack = &mut self.stack;
 
     if let Some((current_solution, remaining_clock)) = bor_stack.pop() {
       match remaining_clock {
@@ -64,13 +64,13 @@ impl Problem<'_> {
         Knapsack::from_clocks(&self.clocks[index..=index], self.max_weight).unwrap();
       let remaining_clocks = &self.clocks[index + 1..];
       SolutionIter {
-        stack: RefCell::new(vec![(initial_solution, remaining_clocks)]),
+        stack: vec![(initial_solution, remaining_clocks)],
         visited: vec![],
         max_weight: self.max_weight,
       }
     } else {
       SolutionIter {
-        stack: RefCell::new(vec![]),
+        stack: vec![],
         visited: vec![],
         max_weight: self.max_weight,
       }
