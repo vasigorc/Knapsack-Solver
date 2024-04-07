@@ -11,7 +11,7 @@ pub struct Clock {
   pub price: Decimal,
 }
 
-type GenericError = Box<dyn std::error::Error + Send + Sync + 'static>;
+pub type GenericError = Box<dyn std::error::Error + Send + Sync + 'static>;
 pub type GenericResult<T> = Result<T, GenericError>;
 
 #[derive(Debug, Clone)]
