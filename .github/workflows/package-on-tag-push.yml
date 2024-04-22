@@ -1,0 +1,73 @@
+name: Package and Attach Artifacts for the Project
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger when a new tag is created, typically for releases
+
+env:
+  CARGO_TERM_COLOR: always
+  DEB_DIR: target/debian
+  RPM_DIR: target/generate-rpm
+
+jobs:
+  package-on-tag-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Cache cargo-deb and cargo-generate-rpm
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin
+          key: ${{ runner.os }}-cargo-tools-${{ hashFiles('**/*.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-tools-
+      - name: Install cargo-deb and cargo-generate-rpm
+        run: |
+          if ! command -v cargo-deb &> /dev/null; then
+            cargo install cargo-deb
+          fi
+          if ! command -v cargo-generate-rpm &> /dev/null; then
+            cargo install cargo-generate-rpm
+          fi
+      - name: Package as .deb
+        run: cargo deb --fast
+      - name: Package as .rpm
+        run: |
+          cargo build --release
+          strip -s target/release/knapsack_problem
+          cargo generate-rpm
+      - name: List packaged files
+        run: ls ${{ env.DEB_DIR }} && ls ${{ env.RPM_DIR }}
+      - name: Archive .deb and .rpm
+        uses: actions/upload-artifact@v2
+        with:
+          name: packaged-artifacts
+          path: |
+            ${{ env.DEB_DIR }}/*.deb
+            ${{ env.RPM_DIR }}/*.rpm
+      - name: Get Tag Information
+        id: tag_info  # Change the ID to reflect multiple outputs
+        run: |
+          tag="${{ github.ref }}"
+          tag_name="${tag#refs/tags/}"
+          tag_message=$(git tag -l --format='%(contents)' "$tag_name")
+          echo "tag_name=$tag_name" >> $GITHUB_ENV  # Set the tag name in GITHUB_ENV
+          echo "tag_message=$tag_message" >> $GITHUB_ENV  # Set the tag message in GITHUB_ENV
+        shell: bash
+      - name: Ensure GitHub Release exists
+        run: |
+          gh release create "${{ env.tag_name }}" -t "Release ${{ env.tag_name }}" -n "${{ env.tag_message }}"  # Use the tag message for the description
+          sleep 5  # Allow time for the release to be fully created
+          gh release list  # Check if the release is created
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Attach Artifacts to Release
+        run: |
+          gh release upload "${{ env.tag_name }}" ${{ env.DEB_DIR }}/*.deb ${{ env.RPM_DIR }}/*.rpm  # Correct tag reference
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    

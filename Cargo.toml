@@ -1,7 +1,10 @@
 [package]
 name = "knapsack_problem"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+description = "Rust code for solving typical dynamic programming programming exercise 'Knapscack problem'"
+license = "MIT"
+authors = ["Vasile Gorcinschi <vasigorc@gmail.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -19,3 +22,35 @@ clippy = "0.0.302"
 expectest = "0.12.0"
 rstest = "0.18.2"
 rustfmt = "0.10.0"
+
+[package.metadata.generate-rpm]
+release = "1" # RPM package release number
+summary = "Knapsack Problem Solver"
+license = "MIT"
+packager = "Vasile Gorcinschi <vasigorc@gmail.com>"
+assets = [
+  { source = "target/release/knapsack_problem", dest = "/usr/bin/knapsack_problem", mode = "0755", user = "root", group = "root" },
+  { source = "README.md", dest = "/usr/share/doc/knapsack_problem/README.md", mode = "0644", doc = true },
+]
+
+[package.metadata.deb]
+maintainer = "Vasile Gorcinschi <vasigorc@gmail.com>"
+copyright = "2024, Vasile Gorcinschi"
+extended-description = """\
+Rust code for solving the Knapsack Problem.
+A typical dynamic programming exercise."""
+depends = "$auto" # Automatically detect dependencies
+section = "Utilities"
+priority = "optional"
+assets = [
+  [
+    "target/release/knapsack_problem",
+    "usr/bin/",
+    "0755",
+  ], # Executable with permissions
+  [
+    "README.md",
+    "usr/share/doc/knapsack_problem/README.md",
+    "0644",
+  ], # Documentation
+]
