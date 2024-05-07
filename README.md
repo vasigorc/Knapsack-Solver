@@ -11,6 +11,44 @@ The 0/1 Knapsack problem is a classic optimization problem where the goal is to 
 - Iterator for generating all possible combinations of items.
 - Selection of the most profitable knapsack based on monetary value.
 
+## Installation
+
+### For Linux
+
+#### Red Hat based distributions
+
+1. Download the latest rpm file from the release page, e.g.
+
+```shell
+wget https://github.com/vasigorc/Knapsack-Solver/releases/download/v0.0.1/knapsack_problem-0.0.1-1.x86_64.rpm
+```
+
+2. Install the file
+
+```shel
+sudo rpm -i knapsack_problem-0.0.1-1.x86_64.rpm
+# test installation
+which /usr/bin/knapsack_problem
+# returns /usr/bin/knapsack_problem
+```
+
+## Runbook
+
+```shell
+# get help page
+/usr/bin/knapsack_problem cli -h
+Usage: knapsack_problem cli --clocks-file <FILE> --weight <FLOAT>
+
+Options:
+      --clocks-file <FILE>
+  -w, --weight <FLOAT>
+  -h, --help                Print help
+
+# run the binary
+/usr/bin/knapsack_problem cli --clocks-file sample_clocks.json -w 5.0
+The best Knapsack combination for the provided input is Knapsack { contents: [Clock { weight: 2.0, price: 5.0 }, Clock { weight: 3.0, price: 8.0 }], capacity: 5 }
+```
+
 ## Development
 
 ### GitHub Action Local Testing
